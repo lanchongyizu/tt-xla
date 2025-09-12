@@ -218,7 +218,7 @@ class Gemma3RotaryEmbedding(nnx.Module):
             self.inv_freq = 1.0 / (
                 base_freq ** (jnp.arange(0, self.dim, 2, dtype=jnp.float32) / self.dim)
             )
-            if not self.is_local_attention:
+            if rope_scaling is not None and not self.is_local_attention:
                 scaling_factor = rope_scaling["factor"]
                 self.inv_freq /= scaling_factor
 
@@ -781,7 +781,7 @@ class Gemma3ForCausalLM(BaseModel):
             # Get next token (use argmax for simplicity)
             next_token = jnp.argmax(logits[:, -1, :], axis=-1)
             # Check if we hit the end of sequence
-            if next_token[0] == eos_token_id:
+            if next_token[0] in eos_token_id:
                 break
             next_token = next_token[:, None]  # Add sequence dimension
             # Append next token

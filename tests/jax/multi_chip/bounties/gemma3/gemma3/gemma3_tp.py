@@ -331,7 +331,7 @@ class Gemma3Attention(nnx.Module):
             param_dtype=config.param_dtype,
             rngs=rngs,
             kernel_init=nnx.with_partitioning(
-                nnx.initializers.lecun_normal(), (None, "X")
+                nnx.initializers.lecun_normal(), (None, None)
             ),
         )
         self.v_proj = nnx.Linear(
@@ -341,7 +341,7 @@ class Gemma3Attention(nnx.Module):
             param_dtype=config.param_dtype,
             rngs=rngs,
             kernel_init=nnx.with_partitioning(
-                nnx.initializers.lecun_normal(), (None, "X")
+                nnx.initializers.lecun_normal(), (None, None)
             ),
         )
         self.o_proj = nnx.Linear(
@@ -381,12 +381,12 @@ class Gemma3Attention(nnx.Module):
         cache_dtype = self.config.dtype
         self.cached_key = nnx.Cache(
             nnx.with_partitioning(
-                lambda: jnp.zeros(cache_shape, cache_dtype), (None, "X", None, None)
+                lambda: jnp.zeros(cache_shape, cache_dtype), (None, None, None, None)
             )()
         )
         self.cached_value = nnx.Cache(
             nnx.with_partitioning(
-                lambda: jnp.zeros(cache_shape, cache_dtype), (None, "X", None, None)
+                lambda: jnp.zeros(cache_shape, cache_dtype), (None, None, None, None)
             )()
         )
         self.cache_index = nnx.Cache(
@@ -488,8 +488,8 @@ class Gemma3Attention(nnx.Module):
         kv_seq_len = key_states.shape[2]  # Total sequence length including cache
 
         # Repeat K/V heads for GQA
-        key_states = self._repeat_kv(key_states, self.num_key_value_groups)
-        value_states = self._repeat_kv(value_states, self.num_key_value_groups)
+        # key_states = self._repeat_kv(key_states, self.num_key_value_groups)
+        # value_states = self._repeat_kv(value_states, self.num_key_value_groups)
 
         # Compute attention weights with scaling
         attn_weights = jnp.matmul(query_states, key_states.transpose(0, 1, 3, 2)) * self.scaling
@@ -877,7 +877,7 @@ class Gemma3ForCausalLM(BaseModel):
             # Get next token (use argmax for simplicity)
             next_token = jnp.argmax(logits[:, -1, :], axis=-1)
             # Check if we hit the end of sequence
-            if next_token[0] == eos_token_id:
+            if next_token[0] in eos_token_id:
                 break
             next_token = next_token[:, None]  # Add sequence dimension
             # Append next token

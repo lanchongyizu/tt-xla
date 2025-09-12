@@ -87,10 +87,9 @@ def compare_outputs(pt_outputs, jax_outputs):
 def run_comparison_test(model_id: str, prompt: str):
     # Setting up the config for both models
     config = AutoConfig.from_pretrained(model_id)
-    config.text_config.num_hidden_layers = 6
-    config.text_config.sliding_window = 16
-    config.vision_config.num_hidden_layers = 2
-    config.text_config._attn_implementation = "eager"
+    config.num_hidden_layers = 6
+    config.sliding_window = 16
+    config._attn_implementation = "eager"
 
     pt_input_ids, pt_attention_mask, tokenizer = prepare_pytorch_inputs(
         model_id, prompt
@@ -101,7 +100,7 @@ def run_comparison_test(model_id: str, prompt: str):
     max_len = pt_outputs[0].shape[0]
 
     jax_config = FlaxGemma3Config()
-    jax_config.update(**config.text_config.to_dict())
+    jax_config.update(**config.to_dict())
     jax_model = load_jax_model(jax_config)
     jax_input_ids = prepare_jax_inputs(pt_input_ids)
     jax_outputs = run_jax_model(jax_model, jax_input_ids, max_len)
@@ -118,6 +117,6 @@ def run_comparison_test(model_id: str, prompt: str):
 
 
 if __name__ == "__main__":
-    model_id = "google/gemma-3-27b-it"
+    model_id = "google/gemma-3-1b-it"
     prompt = "Write a short story about a robot learning to paint:"
     run_comparison_test(model_id, prompt)
